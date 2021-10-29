@@ -71,6 +71,8 @@ let server  = http.createServer(async (req, res) => {
 
 #### Last-Modified/If-Modified-Since
 
+> Last-Modified 对比文件更新时间来缓存 
+
 ```js
 
 
