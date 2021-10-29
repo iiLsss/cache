@@ -15,7 +15,7 @@ let server  = http.createServer(async (req, res) => {
       await fs.access(absPath)
     }
     let content = await fs.readFile(absPath, 'utf-8')
-    // res.setHeader('Cache-Control', 'max-age=10')
+    res.setHeader('Cache-Control', 'max-age=300')
     res.end(content)
  
   } catch (error) {
