@@ -5,7 +5,7 @@ const url = require('url')
 const fs = require('fs').promises
 
 let server  = http.createServer(async (req, res) => {
-  console.log('=====', req.url)
+  console.log(req.url)
   let { pathname } = url.parse(req.url)
   let absPath = path.join(__dirname, '/public', pathname)
   try {
@@ -19,15 +19,15 @@ let server  = http.createServer(async (req, res) => {
     res.end(content)
  
   } catch (error) {
-    console.log('=====', error)
+    console.log(error)
     res.end('Not found')
   }
 })
 
 
 server.listen('3000', () => {
-  console.log('=====', '服务启动')
+  console.log( '服务启动')
 })
 
 let a = path.resolve(__dirname, 'public') 
-console.log('=====', a)
+console.log( a)
