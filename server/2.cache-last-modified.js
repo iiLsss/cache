@@ -19,6 +19,7 @@ let serve = http.createServer(async (req, res) => {
       // 利用文件更新时间 判断时间是否更改 来判断缓存
       res.setHeader('Last-Modified', ctime)
       let ifModifiedSince = req.headers['if-modified-since']
+      console.log('=====ifModifiedSince', ifModifiedSince)
       if (ifModifiedSince === ctime) {
         res.statusCode = 304
         return res.end()
@@ -31,5 +32,5 @@ let serve = http.createServer(async (req, res) => {
 })
 
 serve.listen(3000, () => {
-
+  console.log( '服务启动')
 })

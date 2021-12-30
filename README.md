@@ -73,7 +73,45 @@ let server  = http.createServer(async (req, res) => {
 
 > Last-Modified 对比文件更新时间来缓存 
 
+1. 设置`Header`头的`Cache-Control`为`no-cache`
+2. 匹配静态资源设置`Header`头的`Last-Modified`为当前文件的状态发生变化的时间`stat.ctime.toGMTString()`
+3. 读取请求头里面的`if-modified-since`的值，与`stat.ctime.toGMTString()`进行比较，如相同则返回304，不同则返回文件
+
 ```js
-
-
+let serve = http.createServer(async (req, res) => {
+  res.setHeader('Cache-Control', 'no-cache') // 每次都访问服务器
+  let { pathname } = url.parse(req.url)
+  let absPath = path.join(__dirname, '/public', pathname)
+  try {
+    let statObj = await fs.stat(absPath)
+    if (statObj.isDirectory()) {
+      absPath = path.join(absPath, 'index.html')
+      await fs.access(absPath)
+    }
+    let ctime = statObj.ctime.toGMTString()
+    let content = await fs.readFile(absPath, 'utf-8')
+    if (req.url.match(/css/)) {
+      // 利用文件更新时间 判断时间是否更改 来判断缓存
+      res.setHeader('Last-Modified', ctime)
+      let ifModifiedSince = req.headers['if-modified-since']
+      console.log('=====ifModifiedSince', ifModifiedSince)
+      if (ifModifiedSince === ctime) {
+        res.statusCode = 304
+        return res.end()
+      }
+    }
+    res.end(content)
+  } catch (error) {
+    res.end('Not found')
+  }
+})
 ```
+
+**两次请求返回的状态码第一次是200 第二次是304**
+![两次请求css静态资源](./static/3.last-modified-network.png)
+
+**第一次请求的响应头**
+![第一次请求的响应头](./static/3.last-modified-response.png)
+
+**第二次请求的响应头和请求头**
+![第儿次请求的响应头和响应头](./static/3.last-modified-header.png)
