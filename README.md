@@ -73,9 +73,8 @@ let server  = http.createServer(async (req, res) => {
 
 > Last-Modified 对比文件更新时间来缓存 
 
-1. 设置`Header`头的`Cache-Control`为`no-cache`
-2. 匹配静态资源设置`Header`头的`Last-Modified`为当前文件的状态发生变化的时间`stat.ctime.toGMTString()`
-3. 读取请求头里面的`if-modified-since`的值，与`stat.ctime.toGMTString()`进行比较，如相同则返回304，不同则返回文件
+1. 匹配静态资源设置`Header`头的`Last-Modified`为当前文件的状态发生变化的时间`stat.ctime.toGMTString()`
+2. 读取请求头里面的`if-modified-since`的值，与`stat.ctime.toGMTString()`进行比较，如相同则返回304，不同则返回文件
 
 ```js
 let serve = http.createServer(async (req, res) => {
@@ -115,3 +114,40 @@ let serve = http.createServer(async (req, res) => {
 
 **第二次请求的响应头和请求头**
 ![第儿次请求的响应头和响应头](./static/3.last-modified-header.png)
+
+
+#### Etag/If-None-Match 
+
+> 针对资源文件生成唯一标识符
+
+1. 匹配静态资源设置`Header`头的`ETag`为当前文件的唯一标识符（本示例读取文件内容生成）
+2. 读取请求头中`if-none-match`的值，对当前的`ETag`进行比较，如相同则返回304，不同则返回文件
+
+```js
+let server = http.createServer(async (req, res) => {
+  let {pathname} = new URL(req.url, `http://${req.headers.host}`)
+  let absPath = path.join(__dirname, '/public', pathname)
+  try {
+    let statObj = await fs.stat(absPath)
+    if (statObj.isDirectory()) {
+      absPath = path.join(absPath, 'index.html')
+      await fs.access(absPath)
+    }
+    let content = await fs.readFile(absPath, 'utf-8')
+    if (req.url.match(/css/)) {
+      // 利用文件内容生成 
+      let hash = crypto.createHash('md5').update(content).digest('base64')
+      let ifNoneMatch = req.headers['if-none-match']
+      res.setHeader('ETag', hash)
+      if (ifNoneMatch === hash) {
+        res.statusCode = 304
+        return res.end()
+      }
+    }
+    res.end(content)
+  } catch (error) {
+    console.log(error)
+    res.end('Not found') 
+  }
+})
+```
