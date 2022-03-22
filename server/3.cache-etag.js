@@ -1,11 +1,11 @@
 const http = require('http')
 const path = require('path')
-const url = require('url')
+const { URL } = require('url')
 const fs = require('fs').promises
 const crypto = require('crypto')
 
 let server = http.createServer(async (req, res) => {
-  let { pathname } = url.parse(req.url)
+  let {pathname} = new URL(req.url, `http://${req.headers.host}`)
   let absPath = path.join(__dirname, '/public', pathname)
   try {
     let statObj = await fs.stat(absPath)
